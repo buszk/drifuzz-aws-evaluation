@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Current fuzz iteration
+iteration={iteration}
+# Fuzz target driver
+target={target}
+# Does this run use concolic
+concolic={concolic}
+# Does this run use model result
+model={model}
+
+# Install kvm on bare-metal AWS ec2 instance
+cd /opt/ && sudo apt-get update && sudo apt-get install git -y
+sudo git clone https://github.com/aws-samples/aws-bare-metal-kvm-demo.git
+cd aws-bare-metal-kvm-demo && sudo ./install-kvm-ubuntu.sh
+
+# Enable kvm for current user without relogin
+sudo adduser `id -un` kvm
+sudo adduser `id -un` libvirtd
+sudo rmmod kvm
+sudo modprobe -a kvm
+
+# Enable ptrace (gdb)
+echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+# Increase fileno limit for fuzzer
+echo ubuntu  soft nofile 10000| sudo tee -a /etc/security/limits.conf
+
+sudo apt install screen
+
+# Get and install Drifuzz
+cd ~ && sudo apt-get install -y wget
+wget https://raw.githubusercontent.com/buszk/docker-files/master/drifuzz/install_ubuntu.sh
+bash install_ubuntu.sh 2>&1 |tee -a ~/drifuzz_install.log
+
+if [ $concolic -eq 1 ]; then
+    cd ~/Workspace/git/drifuzz-concolic && ./snapshot_helper.sh $target 2>&1 |tee -a ~/snapshot_creation.log
+fi
+
+cd ~/Workspace/git/Drifuzz
+# Run fuzzing in a deteached screen
+if [ $model -eq 1 ] && [ $concolic -eq 1 ]; then
+    screen -S fuzz -d -m scripts/run_conc_model.sh $target
+elif [ $model -eq 1 ] && [ $concolic -eq 0 ]; then
+    screen -S fuzz -d -m scripts/run_model.sh  $target
+elif [ $model -eq 0 ] && [ $concolic -eq 1 ]; then
+    screen -S fuzz -d -m scripts/run_conc_rand.sh $target
+elif [ $model -eq 0 ] && [ $concolic -eq 0 ]; then
+    screen -S fuzz -d -m scripts/run_random.sh $target
+fi
+
+# Wait for result to be collected
+sleep 2h
+resdir=result-${target}-${concolic}-${model}-${iteration}
+restar=result-${target}-${concolic}-${model}-${iteration}.tar
+mv work $resdir
+tar cf $restar $resdir
+# Upload result
+curl -sS --upload-file $restar 192.99.169.64:12370/upload/$restar
+
+# After 2h30m the instance should terminated
