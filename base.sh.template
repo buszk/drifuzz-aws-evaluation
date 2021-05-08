@@ -33,7 +33,7 @@ wget https://raw.githubusercontent.com/buszk/docker-files/master/drifuzz/install
 bash install_ubuntu.sh 2>&1 |tee -a ~/drifuzz_install.log
 
 if [ $concolic -eq 1 ]; then
-    cd ~/Workspace/git/drifuzz-concolic && ./snapshot_helper.sh $target 2>&1 |tee -a ~/snapshot_creation.log
+    cd ~/Workspace/git/drifuzz-concolic && ./snapshot_helper.py $target 2>&1 |tee -a ~/snapshot_creation.log
 fi
 
 cd ~/Workspace/git/Drifuzz
