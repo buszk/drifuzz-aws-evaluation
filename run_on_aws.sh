@@ -25,7 +25,7 @@ for i in $(seq $niter); do
                 # echo $t $cc $mc
                 echo "Starting instance running ${t}_${cc}_${mc}.sh"
                 userinput=generated/${t}_${cc}_${mc}_${i}.sh
-                sed "s/{target}/$t/g;s/{concolic}/$cc/g;s/{model}/$mc/g;s/{iteration}/$i/g" \
+                sed "s/{TARGET}/$t/g;s/{CONCOLIC}/$cc/g;s/{MODEL}/$mc/g;s/{ITERATION}/$i/g" \
                         base.sh.template > $userinput
                 aws ec2 run-instances \
                     --image-id "ami-01e7ca2ef94a0ae86" \

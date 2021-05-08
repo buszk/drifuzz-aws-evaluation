@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Current fuzz iteration
-iteration={iteration}
+iteration={ITERATION}
 # Fuzz target driver
-target={target}
+target={TARGET}
 # Does this run use concolic
-concolic={concolic}
+concolic={CONCOLIC}
 # Does this run use model result
-model={model}
+model={MODEL}
 
 # Install kvm on bare-metal AWS ec2 instance
 cd /opt/ && sudo apt-get update && sudo apt-get install git -y
