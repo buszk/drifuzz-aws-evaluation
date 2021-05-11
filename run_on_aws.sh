@@ -16,14 +16,18 @@ function finish {
 }
 trap finish EXIT
 
+cnt=0
+
 rm -f run_instances.log
 mkdir -p generated
 for i in $(seq $niter); do
     for t in ${targets[*]}; do
         for cc in ${concolic_configs[*]}; do
             for mc in ${model_configs[*]}; do
+                cnt=$(($cnt+1))
+                cntstr=$(printf "%3d" $cnt)
                 # echo $t $cc $mc
-                echo "Starting instance running ${t}_${cc}_${mc}.sh"
+                echo "[Drifuzz AWS][$cntstr] Starting instance running ${t}_${cc}_${mc}.sh"
                 userinput=generated/${t}_${cc}_${mc}_${i}.sh
                 sed "s/{TARGET}/$t/g;s/{CONCOLIC}/$cc/g;s/{MODEL}/$mc/g;s/{ITERATION}/$i/g" \
                         base.sh.template > $userinput
