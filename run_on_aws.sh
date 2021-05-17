@@ -1,14 +1,27 @@
 #!/bin/bash
+# WiFi driver test
+
+# targets=(
+#     "ath10k_pci"
+#     "ath9k"
+#     "rtwpci"
+# )
+
+# concolic_configs=(1 0)
+# model_configs=(1 0)
+
+# Ethernet driver test
 targets=(
-    # "ath10k_pci"
-    "ath9k"
-    # "rtwpci"
+    # "8139cp"
+    # "atlantic"
+    "snic"
+    #"stmmac_pci"
 )
 
 concolic_configs=(1 0)
-model_configs=(1 0)
+model_configs=(0)
 niter=3
-max_instances=4
+max_instances=1
 
 function finish {
     echo
@@ -69,7 +82,7 @@ split_experiments $max_instances
 
 totaltime=$((1200+7800*$(max_experiment $max_instances)))
 echo "Total time is $(($totaltime/60)) minutes"
-
+# exit 0
 # Start instances
 for i in $(seq $max_instances); do
     userinput=generated/payload_${i}.sh
@@ -89,7 +102,7 @@ for i in $(seq $max_instances); do
         exit 1
     fi
     # Wa
-    sleep 120
+    # sleep 120
 done
 
 # Wait for result
