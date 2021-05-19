@@ -78,11 +78,11 @@ def median_of_three(l):
 def plot(x, label):
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
-    bests = []
 
     for i in range(4):
         values = []
-        dfs = []
+        df = None
+        x_data = []
         for iteration in range(3):
             data_file = str(data_files[i]).replace("NNN", str(iteration+1))
             if exists(data_file):
@@ -98,34 +98,56 @@ def plot(x, label):
                     df['time'] += 3
                 # Select a point every 1 core-hour
                 df = df.iloc[::150, :]
+                current = 0
+                temp = []
+                last_val = 0
+                for _, entry in df.iterrows():
+                    # print(f"{entry['time']=} {entry[x]=} {last_val=} {current=}")
+                    while entry['time'] >= current+1:
+                        temp.append(last_val)
+                        current += 1
+                    if entry['time'] >= current and entry['time'] < current+1:
+                        last_val = entry[x]
+                        temp.append(entry[x])
+                        current += 1
+                
                 # print(f'Value: {df.tail(1)[x].item()}')
+                # plt.plot(range(len(temp)), temp)
+                # print(df['time'])
+                # print(temp)
+                x_data.append(temp)
                 values.append(df.tail(1)[x].item())
-                dfs.append(df)
-        if len(values) == 3:
-            median_index = median_of_three(values)
-            bests.append(len(bests) *3 + median_index)
-            for ind,df in enumerate(dfs):
-                if ind == median_index:
-                    ax = df.plot('time', x, ax=ax, color=colors[i],
-                                label=settings[i])
-                else:
-                    ax = df.plot('time', x, ax=ax, color=colors[i],
-                                label=settings[i], style=[':'])
+
+        if len(x_data) == 3:
+            m = min(len(x_data[0]), len(x_data[1]), len(x_data[2]))
+            med = []
+            min_ = []
+            max_ = []
+            for j in range(m):
+                median_index = median_of_three([x_data[0][j], x_data[1][j], x_data[2][j]])
+                med.append(x_data[median_index][j])
+                min_.append(min(x_data[0][j], x_data[1][j], x_data[2][j]))
+                max_.append(max(x_data[0][j], x_data[1][j], x_data[2][j]))
+
+            plt.plot(range(m), med, color=colors[i], label=settings[i])
+            plt.plot(range(m), min_, ":", color=colors[i], label=settings[i])
+            plt.plot(range(m), max_, ":", color=colors[i], label=settings[i])
+
         else:
-            for df in dfs:
+            if df:
                 ax = df.plot('time', x, ax=ax, color=colors[i],
                                 label=settings[i])
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend([handle for i,handle in enumerate(handles) if i in bests],
-        [label for i,label in enumerate(labels) if i in bests], loc = 'best')
+    ax.legend([handle for i,handle in enumerate(handles) if i % 3 == 0],
+        [label for i,label in enumerate(labels) if i % 3 == 0], loc = 'best')
 
     plt.title(args.target)
     plt.xlabel('Time (core-hour)')
     plt.ylabel(label)
 
     fig = ax.get_figure()
-    fig.savefig(f'plots/{args.target}_{x}.pdf')
+    fig.savefig(f'plots/{args.target}_{x}.png')
 
     plt.clf() 
     plt.gcf()
